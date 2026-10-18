@@ -6,15 +6,18 @@
 # is enforced only when the report contains branch data (nightly job).
 
 # Files never counted: test modules, generated code, benches and fuzz targets.
+# Every entry needs a justification in docs/coverage.md; a change to this list
+# is routed to CODEOWNERS and checked by tools/ci/check_coverage_exclusions.py.
 exclude = [
   "contracts/ledgerlens-score/src/test",   # test_*.rs and test.rs
   "contracts/ledgerlens-score/src/upgrade_smoke.rs",
+  "contracts/ledgerlens-aggregator/src/test",   # test.rs and test_*.rs
   "contracts/ledgerlens-test-support/",
   "contracts/mock-amm/",
   "contracts/mock-lending/",
   "tests/",
   "fuzz/",
-  "benches/",
+  "/benches/",
   "/tests/",
   "/test_snapshots/",
   "/generated/",

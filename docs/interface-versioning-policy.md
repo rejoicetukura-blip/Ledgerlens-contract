@@ -214,3 +214,45 @@ The two gates are complementary and must not be conflated:
 A change may trip one gate without the other (e.g. a new `pub` helper trips the
 Rust API gate only; a reordered struct field trips the ABI gate only). When a
 change trips both, both acknowledgements are required.
+
+## 10. Generated artifact versions
+
+This is the single policy for the version field of every generated
+machine-readable artifact. Generation tools reference this section rather than
+restating it.
+
+- **Rule:** any change to an artifact's content (anything other than its version
+  field) must increase its version, and a version may only increase together
+  with a content change. A version is a positive integer, or dotted semver for
+  suites that already use it; compare numerically.
+- **Breaking** content changes follow §3 (and for the interface itself, §2); other
+  changes still bump the version, at least by one step (semver: minor/patch).
+- **Enforcement:** `tools/ci/check_artifact_versions.py` compares each artifact
+  against `tools/ci/artifact-versions.lock.json` (version + content hash with the
+  version field excluded) and fails in CI on an unbumped change, a backwards
+  version, or a bump without a change. After bumping, run
+  `python3 tools/ci/check_artifact_versions.py --update` and commit the lock.
+  `python3 -m unittest discover -s tools/ci -p "artifact_versions_selftest.py"` seeds an unbumped change
+  for every covered artifact and asserts the check fails.
+
+| Artifact | Version field | Producer |
+|---|---|---|
+| `schemas/risk_score.schema.json` | `schema_version` (int) | `tools/schema-gen` (`SCHEMA_VERSION`) |
+| `tests/composability/sdk_conformance_fixtures.json` | `schema_version` (int) | hand-maintained fixtures, see `docs/sdk-conformance-fixtures.md` |
+| `tests/conformance/conformance_vectors.json` | `suite_version` (semver) | conformance suite |
+| compliance report format | `REPORT_VERSION` in `tools/compliance-report/generate.py` | `docs/compliance-report.md` |
+| Interface metadata | `interface_version` | tied to `CONTRACT_VERSION` (§2) and checked by `tests/doc_sync_check.rs` |
+| Event schema | `EVENT_VERSION` | `docs/event-schema-reference.md`; versioned in the contract and verified by the event-schema tests |
+
+### Historical review (2026-10)
+
+Each versioned artifact above has a single commit in history and has never been
+bumped (all are at their initial version), so there is no divergent bumping
+history to reconcile. Drift found against this policy: `risk_score.schema.json`
+(and its generated TS/Python twins' source) carried **no version at all**, so
+schema changes were undetectable by consumers; it now carries `schema_version`.
+`conformance_vectors.json` uses semver while the others use integers; this is
+kept deliberately (the Rust harness parses `suite_version` as a string) and the
+checker accepts both. `interface_version` and `EVENT_VERSION` live in contract
+source rather than in a generated file; they are guarded by the existing
+`doc_sync_check` and event-schema tests instead of the lock.

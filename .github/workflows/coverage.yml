@@ -20,7 +20,7 @@ env:
   CARGO_INCREMENTAL: 0
   # Excluded from reports: test modules, generated code, benches, fuzz targets
   # and test-only crates. Keep in sync with `exclude` in coverage-thresholds.toml.
-  IGNORE_REGEX: '(/src/test[^/]*\.rs$|/tests/|/benches/|/fuzz/|/generated/|ledgerlens-test-support/|mock-amm/|mock-lending/)'
+  IGNORE_REGEX: '(/src/test[^/]*\.rs$|/src/upgrade_smoke\.rs$|/tests/|/benches/|/fuzz/|/generated/|ledgerlens-test-support/|mock-amm/|mock-lending/)'
 
 jobs:
   coverage:
@@ -64,6 +64,20 @@ jobs:
       - name: Changed files
         if: github.event_name == 'pull_request'
         run: git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD > target/changed-files.txt
+      - name: Flag coverage exclusion changes
+        if: github.event_name == 'pull_request'
+        run: |
+          python3 tools/ci/check_coverage_exclusions.py
+          base="${{ github.event.pull_request.base.sha }}"
+          if ! git diff --quiet "$base"...HEAD -- coverage-thresholds.toml .github/workflows/coverage.yml tools/ci/check_coverage_exclusions.py; then
+            echo "::warning title=Coverage exclusion config changed::Exclusion list or gate config changed; CODEOWNERS review is required (docs/coverage.md#exclusion-policy)."
+            {
+              echo '### :warning: Coverage exclusion / gate configuration changed'
+              echo '```diff'
+              git diff "$base"...HEAD -- coverage-thresholds.toml .github/workflows/coverage.yml tools/ci/check_coverage_exclusions.py
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Coverage gate
         id: gate
         run: |

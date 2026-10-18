@@ -2,6 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://ledgerlens.dev/schemas/risk_score.schema.json",
   "title": "RiskScore",
+  "schema_version": 1,
   "$defs": {
     "RiskScore": {
       "type": "object",

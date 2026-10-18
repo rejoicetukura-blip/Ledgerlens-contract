@@ -151,3 +151,15 @@ tier report.
   through the matching checklist in [`docs/review-checklists.md`](docs/review-checklists.md)
   before requesting review — reviewers will be checking against it, so a PR description that
   addresses each item up front gets reviewed faster than one that doesn't.
+
+## CODEOWNERS maintenance
+
+`.github/CODEOWNERS` routes mandatory review for security- and release-critical
+paths. When you add, move or rename a top-level directory or crate, update it in
+the same PR. `python3 tools/ci/check_codeowners.py` (CI job `repo-hygiene`)
+fails when a pattern matches no tracked path (a stale pattern silently drops
+ownership) or when a critical path (contracts, schemas, fuzz, deploy, scripts,
+workflows, toolchain/supply-chain config, coverage/test-tier config) has no
+owner. Patterns are gitignore-style and the **last** matching pattern wins.
+Run `python3 tools/ci/check_codeowners.py --self-test` to see the dead-pattern
+check trip on a seeded stale pattern.

@@ -1195,3 +1195,8 @@ id = "contracts/ledgerlens-score/benches/wallet_cluster.rs"
 kind = "stress"
 command = "cargo bench -p ledgerlens-score --bench wallet_cluster"
 reason = "criterion measurement rather than an assertion: classified but deliberately outside the tier partition (docs/test-tiers.md)"
+
+[[unit]]
+id = "tools/score-submitter/tests/crash_recovery.rs"
+kind = "integration"
+tier = "standard"

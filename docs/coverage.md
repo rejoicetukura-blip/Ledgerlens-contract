@@ -11,7 +11,7 @@ covered lines are actually asserted on.
 rustup component add llvm-tools-preview
 cargo install cargo-llvm-cov --version 0.6.16 --locked
 
-IGNORE='(/src/test[^/]*\.rs$|/tests/|/benches/|/fuzz/|/generated/|ledgerlens-test-support/|mock-amm/|mock-lending/)'
+IGNORE='(/src/test[^/]*\.rs$|/src/upgrade_smoke\.rs$|/tests/|/benches/|/fuzz/|/generated/|ledgerlens-test-support/|mock-amm/|mock-lending/)'
 cargo llvm-cov --workspace --no-report
 cargo llvm-cov report --ignore-filename-regex "$IGNORE" --html      # browse target/llvm-cov/html/index.html
 cargo llvm-cov report --ignore-filename-regex "$IGNORE" --json --output-path target/coverage.json
@@ -29,10 +29,46 @@ measured. Excluded, both in the `--ignore-filename-regex` and in the
 
 | Excluded | Why |
 |---|---|
-| `src/test*.rs` (`test.rs`, `test_*.rs`), `tests/`, `upgrade_smoke.rs` | test code measuring itself inflates numbers |
+| `src/test*.rs` (`test.rs`, `test_*.rs`) in `ledgerlens-score` and `ledgerlens-aggregator`, `tests/` | test code measuring itself inflates numbers |
+| `contracts/ledgerlens-score/src/upgrade_smoke.rs` | post-upgrade canary tests only; no product code |
 | `benches/`, `fuzz/` | measurement/fuzzing harnesses, not product code |
-| `generated/` paths | generated code (bindings, schemas) |
+| `generated/`, `test_snapshots/` paths | generated code and recorded snapshots |
 | `ledgerlens-test-support`, `mock-amm`, `mock-lending` | test-only crates |
+
+### Exclusion policy
+
+Exclusions are a blind spot: a path on the list stops being gated. So:
+
+1. **Only test, generated or harness code may be excluded.** Anything else
+   needs an entry in `ALLOWED_EXCLUSIONS` in
+   [`tools/ci/check_coverage_exclusions.py`](../tools/ci/check_coverage_exclusions.py)
+   with a written reason, and that row must be added to the table above.
+2. **Security-relevant files can never be silently excluded.** The check fails
+   when an excluded file is product code under `contracts/*/src` or
+   `tools/*/src`, its name matches governance / storage / attestation / auth /
+   upgrade / replay / oracle patterns, or it has a `[modules.*]` threshold.
+3. **The two lists must agree.** `exclude` in `coverage-thresholds.toml` and
+   `IGNORE_REGEX` in `.github/workflows/coverage.yml` (and the `IGNORE` example
+   above) must exclude exactly the same `.rs` files; otherwise the local report,
+   the CI report and the gate disagree about what is measured.
+4. **Changes are flagged in review.** `coverage-thresholds.toml`,
+   `.github/` and `tools/ci/` are in `CODEOWNERS`, so architecture reviewers
+   must approve; on PRs the `Coverage` workflow also emits a warning annotation
+   and prints the diff of the exclusion/gate configuration in the job summary.
+
+The check runs in CI (`repo-hygiene` job and the `Coverage` workflow) and
+locally with `python3 tools/ci/check_coverage_exclusions.py`;
+`--self-test` demonstrates that seeded security-looking exclusions
+(`governance_actions.rs`, `storage.rs`, a `[modules.*]` file) and list drift are
+rejected.
+
+#### Audit (2026-10)
+
+Every current exclusion is test code, a harness, a snapshot/generated output or
+a test-only crate (table above). The audit found and fixed two inconsistencies:
+the TOML list did not exclude the aggregator's `test*.rs` or nested `benches/`
+(while the regex did), and `upgrade_smoke.rs` was excluded in the TOML list but
+not in the regex.
 
 ## Thresholds
 

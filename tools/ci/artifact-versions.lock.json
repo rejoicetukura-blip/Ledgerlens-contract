@@ -1,0 +1,18 @@
+{
+  "schemas/risk_score.schema.json": {
+    "content_sha256": "9c354a20beded3683868bdae917becaefbf4c6a9fb119ab8155e1f41a21284f0",
+    "version": "1"
+  },
+  "tests/composability/sdk_conformance_fixtures.json": {
+    "content_sha256": "b83f8ddb38f8172cdf373aa512df7919ff5518fdfd3fc803e6937a949efee237",
+    "version": "1"
+  },
+  "tests/conformance/conformance_vectors.json": {
+    "content_sha256": "95819086ab0552c9a0fa28dfba8805432784284a2deb54d352c15fe73c5cec9d",
+    "version": "1.0.0"
+  },
+  "tools/compliance-report/generate.py": {
+    "content_sha256": "8428fa48fa38df2dbef7e164e6668ae769743a5e5b7f748c911eef5db7f99c57",
+    "version": "1"
+  }
+}

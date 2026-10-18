@@ -359,6 +359,28 @@ jobs:
       - name: Check Error enum discriminants are append-only
         run: tools/check_error_discriminants.sh "${{ github.event.pull_request.base.sha }}" HEAD
 
+  repo-hygiene:
+    name: CODEOWNERS, artifact versions, coverage exclusions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # #1408: every CODEOWNERS pattern must match a real path and every
+      # security/release-critical path must have an owner.
+      - name: CODEOWNERS staleness check
+        run: |
+          python3 tools/ci/check_codeowners.py --self-test
+          python3 tools/ci/check_codeowners.py
+      # #1409: generated artifacts must bump their version when content changes.
+      - name: Generated artifact version bumps
+        run: |
+          python3 -m unittest discover -v -s tools/ci -p 'artifact_versions_selftest.py'
+          python3 tools/ci/check_artifact_versions.py
+      # #1406: the coverage exclusion list cannot hide security-relevant code.
+      - name: Coverage exclusion safeguard
+        run: |
+          python3 tools/ci/check_coverage_exclusions.py --self-test
+          python3 tools/ci/check_coverage_exclusions.py
+
   doc-snippets:
     name: Executable documentation snippets
     runs-on: ubuntu-latest
@@ -893,6 +915,7 @@ jobs:
       - repro-verify
       - spec-model-check
       - doc-snippets
+      - repo-hygiene
       - environment-smoke
     runs-on: ubuntu-latest
     steps:

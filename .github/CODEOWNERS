@@ -2,6 +2,9 @@
 # Mandatory review routing for LedgerLens security-sensitive paths
 
 # Smart Contracts & Domain Logic
+# (last matching pattern wins; the catch-all covers every contract crate, incl.
+# reference-provider and the mocks, so a new crate is never unowned)
+/contracts/                          @LedgerLens/arch-reviewers
 /contracts/ledgerlens-score/src/    @LedgerLens/arch-reviewers
 /contracts/ledgerlens-aggregator/src/ @LedgerLens/arch-reviewers
 
@@ -12,12 +15,25 @@
 
 # Build Configuration & Tooling
 /Cargo.toml                          @LedgerLens/arch-reviewers
+/Cargo.lock                          @LedgerLens/arch-reviewers
+/deny.toml                           @LedgerLens/arch-reviewers
+/rust-toolchain.toml                 @LedgerLens/arch-reviewers
+/toolchain-versions.json             @LedgerLens/arch-reviewers
+/schemas/                            @LedgerLens/arch-reviewers
+/fuzz/                               @LedgerLens/arch-reviewers
+
+# CI, release engineering and the coverage / test-tier gates. Changes to the
+# coverage exclusion list or thresholds must be reviewed here (docs/coverage.md).
+/.github/                            @LedgerLens/arch-reviewers
+/coverage-thresholds.toml            @LedgerLens/arch-reviewers
+/test-tiers.toml                     @LedgerLens/arch-reviewers
 /tools/                              @LedgerLens/arch-reviewers
 
 # Operational & Deployment Scripts
 # Gate production (canary-deploy, rollback, key-rotation rehearsal) and encrypted mainnet manifests
 /scripts/                            @LedgerLens/arch-reviewers
 /deploy/                             @LedgerLens/arch-reviewers
+/deploy.sh                           @LedgerLens/arch-reviewers
 
 # Reference & Integration Tests
 /examples/                           @LedgerLens/arch-reviewers

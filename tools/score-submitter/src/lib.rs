@@ -380,6 +380,17 @@ impl<T: SorobanTransport> ScoreSubmitter<T> {
                 }
             }
             FailureKind::Permanent => {
+                // A duplicate-key rejection after a crash/restart means an earlier
+                // submission of this request already landed: converge on it.
+                if let Some(confirmation) = self
+                    .transport
+                    .lookup_idempotency_key(&request.contract_id, &request.idempotency_key)
+                    .map_err(|lookup| anyhow!("permanent failure idempotency lookup failed: {}", lookup.message))?
+                {
+                    self.metrics.confirmations += 1;
+                    self.log("confirmed_after_permanent_failure", request, Some(attempt));
+                    return Ok(Some(confirmation));
+                }
                 return Err(anyhow!("permanent submission failure: {}", error.message));
             }
         }

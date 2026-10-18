@@ -28,6 +28,11 @@ pub const RISK_SCORE_NAME: &str = "RiskScore";
 /// Default directory the CLI emits generated artifacts into.
 pub const DEFAULT_OUTPUT_DIR: &str = "schemas";
 
+/// Version of the generated JSON Schema artifact. Bump per
+/// `docs/interface-versioning-policy.md` § Generated artifact versions whenever
+/// the schema content changes; `tools/ci/check_artifact_versions.py` enforces it.
+pub const SCHEMA_VERSION: u32 = 1;
+
 /// Filename of the generated JSON Schema artifact.
 pub const SCHEMA_FILE: &str = "risk_score.schema.json";
 
@@ -231,6 +236,7 @@ pub fn struct_to_json_schema(struct_: &ScSpecUdtStructV0) -> Value {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "$id": "https://ledgerlens.dev/schemas/risk_score.schema.json",
         "title": xdr_str(&struct_.name),
+        "schema_version": SCHEMA_VERSION,
         "$defs": {
             xdr_str(&struct_.name): {
                 "type": "object",
